@@ -1,0 +1,6 @@
+bin/
+obj/
+refs/
+smapi/
+out/
+*.zip

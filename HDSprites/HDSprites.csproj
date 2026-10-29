@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Builds without a local copy of the game, so it can run on GitHub Actions.
+    SMAPI and Harmony are referenced from the SMAPI release (see .github/workflows/build.yml),
+    MonoGame from NuGet at the version Stardew Valley 1.6 ships. None are copied to the output.
+  -->
+  <PropertyGroup>
+    <AssemblyName>HDSprites</AssemblyName>
+    <RootNamespace>HDSprites</RootNamespace>
+    <Version>2.0.0</Version>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <SmapiRefDir Condition="'$(SmapiRefDir)' == ''">$(MSBuildProjectDirectory)/../refs</SmapiRefDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="StardewModdingAPI">
+      <HintPath>$(SmapiRefDir)/StardewModdingAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SMAPI.Toolkit.CoreInterfaces">
+      <HintPath>$(SmapiRefDir)/SMAPI.Toolkit.CoreInterfaces.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(SmapiRefDir)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
