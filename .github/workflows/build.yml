@@ -281,7 +281,10 @@ jobs:
           echo "SMAPI installer: $url"
           curl -sSL "$url" -o smapi/installer.zip
           cd smapi
-          unzip -q installer.zip -d installer
+          unzip -q installer.zip -d l1
+          # Newer SMAPI releases are double-zipped: unpack the inner zip if there is one.
+          inner=$(find l1 -iname '*.zip' | head -n1)
+          if [ -n "$inner" ]; then unzip -q "$inner" -d installer; else mv l1 installer; fi
           dat=$(find installer -path '*windows*' -name 'install.dat' | head -n1)
           [ -z "$dat" ] && dat=$(find installer -name 'install.dat' | head -n1)
           unzip -q "$dat" -d game
