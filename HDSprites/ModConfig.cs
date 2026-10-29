@@ -20,8 +20,11 @@ namespace HDSprites
         /// <summary>Draw sprites thinner than this (in source pixels) without upscaling. Keeps UI bars and 1px lines crisp.</summary>
         public int MinSpriteSize { get; set; } = 3;
 
-        /// <summary>Upscale map tilesheets (ground, floors, walls). Off by default: on Android these currently draw black.</summary>
+        /// <summary>Upscale map tilesheets (ground, floors, walls). Experimental.</summary>
         public bool UpscaleMapTiles { get; set; } = false;
+
+        /// <summary>Upscale the farmer: body, hair, clothes, hats and accessories together.</summary>
+        public bool UpscaleFarmer { get; set; } = true;
 
         /// <summary>Asset name prefixes to upscale.</summary>
         public List<string> Include { get; set; } = new()
@@ -39,9 +42,6 @@ namespace HDSprites
         /// <summary>Asset name prefixes to leave alone. These win over Include.</summary>
         public List<string> Exclude { get; set; } = new()
         {
-            // The game rebuilds the farmer body into its own texture, so upscaling only the
-            // clothes/hair layers makes them look mismatched against a pixel-art body.
-            "Characters/Farmer/",
             // SpriteText fonts turn to mush when smoothed.
             "LooseSprites/font_",
         };

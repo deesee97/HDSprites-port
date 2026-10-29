@@ -1,7 +1,7 @@
 {
   "Name": "HD Sprites (1.6 port)",
   "Author": "NinthWorld, ported by George Cleland",
-  "Version": "2.0.0-alpha.4",
+  "Version": "2.0.0-alpha.5",
   "Description": "Doubles the resolution of the game's textures at runtime with a 2xBR filter. Works on top of Content Patcher recolours.",
   "UniqueID": "GeorgeCleland.HDSprites",
   "EntryDll": "HDSprites.dll",

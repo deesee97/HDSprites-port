@@ -106,6 +106,11 @@ namespace HDSprites
             }
         }
 
+        internal static bool IsRegistered(Texture2D texture)
+        {
+            return texture != null && Table.TryGetValue(texture, out _);
+        }
+
         /// <summary>Flag every tagged texture for an asset so its HD copy is rebuilt on next draw.</summary>
         internal static void MarkDirty(string assetName)
         {

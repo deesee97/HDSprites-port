@@ -31,7 +31,9 @@ namespace HDSprites
 
             HDTexture.Monitor = this.Monitor;
 
-            DrawPatches.Apply(new Harmony(this.ModManifest.UniqueID), this.Monitor);
+            var harmony = new Harmony(this.ModManifest.UniqueID);
+            DrawPatches.Apply(harmony, this.Monitor);
+            FarmerPatch.Apply(harmony, this.Monitor);
 
             helper.Events.Content.AssetRequested += this.OnAssetRequested;
             helper.Events.Content.AssetReady += this.OnAssetReady;
@@ -44,11 +46,19 @@ namespace HDSprites
         {
             DrawPatches.Enabled = this.Config.Enabled;
             DrawPatches.MinSpriteSize = Math.Max(0, this.Config.MinSpriteSize);
+            FarmerPatch.Enabled = this.Config.UpscaleFarmer;
             HDTexture.MaxTextureSize = Math.Max(1024, this.Config.MaxTextureSize);
             HDTexture.SetConcurrency(this.Config.MaxConcurrentUpscales);
 
             this.Grids = new List<(string, int, int)>();
+
+            // Built-in grids first, then the player's config on top. SMAPI replaces (not merges) dictionaries
+            // read from config.json, so without this, grids added in updates would never reach old configs.
+            var grids = new Dictionary<string, string>(new ModConfig().SpriteGrids, StringComparer.OrdinalIgnoreCase);
             foreach (var pair in this.Config.SpriteGrids)
+                grids[pair.Key] = pair.Value;
+
+            foreach (var pair in grids)
             {
                 string[] parts = pair.Value.ToLowerInvariant().Split('x');
                 if (parts.Length == 2 && int.TryParse(parts[0], out int w) && int.TryParse(parts[1], out int h))
@@ -66,14 +76,25 @@ namespace HDSprites
                 return;
 
             IAssetName name = e.NameWithoutLocale;
-            if (!this.Config.UpscaleMapTiles && name.StartsWith("Maps/"))
-                return;
-            if (this.Config.Exclude.Any(p => name.StartsWith(p)))
-                return;
-            if (!this.Config.Include.Any(p => name.StartsWith(p)))
-                return;
+            int gridW, gridH;
 
-            (int gridW, int gridH) = this.GetGrid(name);
+            if (name.StartsWith("Characters/Farmer/"))
+            {
+                // Farmer layers only make sense together: if the body can't be upscaled, leave all of them.
+                if (!this.Config.UpscaleFarmer || !FarmerPatch.Active)
+                    return;
+                (gridW, gridH) = GetFarmerGrid(name);
+            }
+            else
+            {
+                if (!this.Config.UpscaleMapTiles && name.StartsWith("Maps/"))
+                    return;
+                if (this.Config.Exclude.Any(p => name.StartsWith(p)))
+                    return;
+                if (!this.Config.Include.Any(p => name.StartsWith(p)))
+                    return;
+                (gridW, gridH) = this.GetGrid(name);
+            }
             string key = name.Name;
 
             // Run after every other edit, and only tag the texture: its pixels are read later on the draw thread.
@@ -85,6 +106,15 @@ namespace HDSprites
             // Covers SMAPI copying fresh pixels into an existing texture (e.g. Content Patcher
             // conditions changing with season or weather).
             HDTexture.MarkDirty(e.NameWithoutLocale.Name);
+        }
+
+        /// <summary>Sprite cell sizes for the farmer's layers, so animation frames don't bleed into each other.</summary>
+        private static (int, int) GetFarmerGrid(IAssetName name)
+        {
+            if (name.StartsWith("Characters/Farmer/shirts")) return (8, 8);
+            if (name.StartsWith("Characters/Farmer/hats")) return (20, 20);
+            if (name.StartsWith("Characters/Farmer/accessories")) return (16, 16);
+            return (16, 32); // body sheets, hairstyles, pants
         }
 
         private (int, int) GetGrid(IAssetName name)
@@ -134,6 +164,14 @@ namespace HDSprites
                 setValue: value => this.Config.UpscaleMapTiles = value,
                 name: () => "Upscale map tiles",
                 tooltip: () => "Experimental. Ground, floors and walls. Restart the game after changing."
+            );
+
+            gmcm.AddBoolOption(
+                mod: this.ModManifest,
+                getValue: () => this.Config.UpscaleFarmer,
+                setValue: value => this.Config.UpscaleFarmer = value,
+                name: () => "Upscale farmer",
+                tooltip: () => "Body, hair, clothes, hats and accessories. Restart the game after changing."
             );
 
             gmcm.AddKeybindList(
